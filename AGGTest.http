@@ -1,0 +1,6 @@
+@AGGTest_HostAddress = http://localhost:5247
+
+GET {{AGGTest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
