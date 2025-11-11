@@ -1,6 +1,6 @@
 # AMSI / AAG Developer Test – Flight Data API
 
-A .NET 8 Web API that automatically downloads, caches, and stores live flight data from the [AviationStack API](https://aviationstack.com/).  
+A .NET 8 Web API that automatically downloads, caches, and stores live flight data from the AviationStack API (https://aviationstack.com/).  
 It uses **Redis JSON** for high-performance caching, **MySQL** for persistence, and **background jobs** for periodic ingestion.  
 All cache endpoints are **secured via API key authentication**.
 
@@ -10,14 +10,54 @@ All cache endpoints are **secured via API key authentication**.
 
 This project was built as part of the **AMSI / AAG Developer Test**, implementing all required functionality and several enhancements:
 
-- ✅ **Automated background ingestion** — downloads and stores flight data at regular intervals.  
-- ✅ **MySQL integration** — saves raw flight data using stored procedures (`sp_insert_flights_from_json`).  
-- ✅ **Redis JSON caching** — keeps fresh copies of the most recent datasets with snapshots and indexes.  
-- ✅ **Search endpoints** — query cached data by airline or airport (OR filter logic).  
-- ✅ **API key protection** — all cache endpoints require a valid API key via the `X-API-KEY` header.  
-- ✅ **Swagger documentation** — easy to test endpoints interactively.  
+-  **Automated background ingestion** - downloads and stores flight data at regular intervals.  
+-  **MySQL integration** - saves raw flight data using stored procedures (`sp_insert_flights_from_json`).  
+-  **Redis JSON caching** - keeps fresh copies of the most recent datasets with snapshots and indexes.  
+-  **Search endpoints** - query cached data by airline or airport (OR filter logic).  
+-  **API key protection** - all cache endpoints require a valid API key via the `X-API-KEY` header.  
+-  **Swagger documentation** - easy to test endpoints interactively.  
 
 ---
+
+## Testing endpoints in Swagger
+
+To test the endpoints, clone this repository, open it using Visual Studio, and at the top, you will see the start button, which will run Swagger to test the endpoints.
+Once executed, a console will open to track the logs (in a production environment, they would be recorded in the AWS console or in a database) and Swagger to test each piece of the system.
+You must use the API key provided in the email.
+At Swagger, you will find different endpoints such as:
+
+
+## Cache
+```
+api/Cache/get/{key}
+api/Cache/setjson/{key}
+api/Cache/search
+api/Cache/keys
+```
+## Flights
+```
+api/Flights/GetFlights
+```
+ 
+## api/Cache/keys
+In this API, you can list all the keys stored in the Redis cache layer
+
+## api/Cache/search
+For using this API, I recommend first running *api/Cache/keys* to list the existing keys in Redis, then using *api/Cache/get/{key}* where the key will be the last available snapshot or *flights:last* by default to view the JSON inside, then construct the body JSON using the *airport IATA* and *airline IATA* to filter and get results, for example 
+```json
+{
+"airline_iata": "MU",
+"airport_iata": "PVG"
+}
+```
+## api/Cache/setjson/{key}
+Through the header, you can send a key registered in Redis (previously obtained in api/Cache/keys) or a new one, and in the body, what you want to save within that key
+
+## api/Cache/get/{key}
+This endpoint receives the registered key in Redis that you want to query through the header. A good example could be flights:last
+
+## api/Flights/GetFlights
+This endpoint is used to retrieve information from the AviationStack API (https://aviationstack.com/), which we are using to cache, filter, and store in a database.
 
 ---
 
@@ -53,14 +93,14 @@ This project was built as part of the **AMSI / AAG Developer Test**, implementin
 All cache endpoints are protected by an API key.  
 Include the following header in your requests:
 
-```http
+```
 X-API-KEY: YOUR_SECRET_KEY
 
 Example Endpoints
-1️⃣ Get Cached JSON by Key
+- Get Cached JSON by Key
 GET /api/cache/get/flights:last
 
-2️⃣ Set Custom JSON
+- Set Custom JSON
 POST /api/cache/setjson/customkey
 Content-Type: application/json
 
@@ -68,7 +108,7 @@ Content-Type: application/json
   "test": "Hello Redis!"
 }
 
-3️⃣ Search Flights (by IATA)
+- Search Flights (by IATA)
 POST /api/cache/search
 Content-Type: application/json
 X-API-KEY: YOUR_SECRET_KEY
@@ -78,10 +118,10 @@ X-API-KEY: YOUR_SECRET_KEY
   "airport_iata": "HBX"
 }
 
-4️⃣ List Redis Keys
+- List Redis Keys
 GET /api/cache/keys?pattern=flights:*
 
-5️⃣ Manually Trigger Data Ingestion
+- Manually Trigger Data Ingestion
 GET /api/flights/getflights
 ```
 ## Search Logic
@@ -100,15 +140,15 @@ If none → return full dataset.
 
 The ingestion job (FlightsJob) runs automatically every Ingestion:IntervalMinutes, performing:
 
-1️⃣Fetch from AviationStack API
+- Fetch from AviationStack API
 
-2️⃣Store JSON snapshot in Redis (flights:last and flights:snapshot)
+- Store JSON snapshot in Redis (flights:last and flights:snapshot)
 
-3️⃣Update version key
+- Update version key
 
-4️⃣Push snapshot reference into a daily index list
+- Push snapshot reference into a daily index list
 
-5️⃣Insert dataset into MySQL
+- Insert dataset into MySQL
 
 ## API Key Security
 
@@ -121,17 +161,6 @@ Validates against value in configuration
 
 Fails with 401 Unauthorized if missing or invalid
 
-## Example Response (Search)
-```[
-  {
-    "flight_date": "2025-11-08",
-    "flight_status": "scheduled",
-    "airline": { "iata": "6E", "name": "IndiGo" },
-    "departure": { "iata": "HBX", "airport": "Hubli" },
-    "arrival": { "iata": "BOM", "airport": "Mumbai" }
-  }
-]
-```
 ## Author
 
 Yulian Samuel Barco Suarez
