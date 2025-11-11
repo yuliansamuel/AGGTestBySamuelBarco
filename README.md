@@ -8,7 +8,7 @@ All cache endpoints are **secured via API key authentication**.
 
 ## Project Overview
 
-This project was built as part of the **AMSI / AAG Developer Test**, implementing all required functionality and several enhancements:
+This project was built as part of the **AMSI / AAG Developer Test**, implementing all required functionality:
 
 -  **Automated background ingestion** - downloads and stores flight data at regular intervals.  
 -  **MySQL integration** - saves raw flight data using stored procedures (`sp_insert_flights_from_json`).  
